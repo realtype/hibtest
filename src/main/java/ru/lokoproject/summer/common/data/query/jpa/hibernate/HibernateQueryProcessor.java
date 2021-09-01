@@ -6,8 +6,10 @@ import ru.lokoproject.summer.common.data.query.*;
 import ru.lokoproject.summer.common.data.util.FieldPathUtil;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.util.Arrays;
 import java.util.List;
 
 import static ru.lokoproject.summer.common.data.query.QueryTypes.*;
@@ -19,14 +21,22 @@ public class HibernateQueryProcessor implements QueryProcessor {
     @Setter
     Session session;
 
-    void processQuery(Query query){
+    public void processQuery(Query query){
+        Class entityClass = null;
         try {
-            Class entityClass = Class.forName(query.getClassName());
+            entityClass = Class.forName(query.getClassName());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
         CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery criteriaQuery = builder.createQuery();
+        Root root  = criteriaQuery.from(entityClass);
+        CriteriaQuery where = criteriaQuery.select(root).where(createPredicates(
+                Arrays.asList(query), builder, root));
+
+        List resultList = session.createQuery(where).getResultList();
+        System.out.println("e");
 
     }
 
@@ -48,10 +58,10 @@ public class HibernateQueryProcessor implements QueryProcessor {
     Predicate createGroupPredicate(Query query, CriteriaBuilder builder, Root root){
         GroupQuery groupQuery = (GroupQuery) query;
         if (OR.equalsIgnoreCase(query.getType())){
-            builder.or(createPredicates(groupQuery.getChildQueries(), builder, root));
+            return builder.or(createPredicates(groupQuery.getChildQueries(), builder, root));
         }
         else if (AND.equalsIgnoreCase(query.getType())){
-            builder.and(createPredicates(groupQuery.getChildQueries(), builder, root));
+            return builder.and(createPredicates(groupQuery.getChildQueries(), builder, root));
         }
         throw new QueryExecutionException(String.format("unknown group query type '%s'", query.getType()), query);
     }
@@ -64,22 +74,22 @@ public class HibernateQueryProcessor implements QueryProcessor {
                 throw new QueryExecutionException("empty param for query", query);
 
             if(GT.equalsIgnoreCase(specificQuery.getType())){
-                builder.gt(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
+                return builder.gt(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
             }
             else if(GE.equalsIgnoreCase(specificQuery.getType())){
-                builder.ge(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
+                return builder.ge(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
             }
             else if(LT.equalsIgnoreCase(specificQuery.getType())){
-                builder.lt(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
+                return builder.lt(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
             }
             else if(LE.equalsIgnoreCase(specificQuery.getType())){
-                builder.le(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
+                return builder.le(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));
             }
             else if(EQ.equalsIgnoreCase(specificQuery.getType())){
-                builder.equal(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));  // TODO: 26.08.2021 преобразование к типу модели
+                return builder.equal(root.get(specificQuery.getPath()), getNumberValue(specificQuery.getParams().get(0)));  // TODO: 26.08.2021 преобразование к типу модели
             }
             else if(LIKE.equalsIgnoreCase(specificQuery.getType())){
-                builder.like(root.get(specificQuery.getPath()), specificQuery.getParams().get(0));
+                return builder.like(root.get(specificQuery.getPath()), specificQuery.getParams().get(0));
             }
             // TODO: 27.08.2021
 //            else if(BETWEEN.equalsIgnoreCase(specificQuery.getType())){
