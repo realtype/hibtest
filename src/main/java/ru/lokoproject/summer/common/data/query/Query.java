@@ -9,5 +9,6 @@ public abstract class Query {
     boolean isGroup;
     boolean isNot;
     String type;
+    String additionalType;
     String className;
 }

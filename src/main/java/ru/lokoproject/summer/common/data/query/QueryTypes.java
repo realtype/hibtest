@@ -13,4 +13,8 @@ public class QueryTypes {
     public static final String BETWEEN = "BETWEEN";
     public static final String LIKE = "LIKE";
     public static final String IN = "IN";
+
+
+
+
 }

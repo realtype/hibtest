@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 public class FieldPathUtil {
 
     private static final String DELIMITER = ".";
+    private static final String EXP_DELIMITER = "\\.";
 
     public static boolean isFieldPathFinal(String path){
         return !path.contains(DELIMITER);
@@ -16,10 +17,10 @@ public class FieldPathUtil {
     }
 
     public static String getLastPartOfPath(String path){
-        return path.substring(path.lastIndexOf(DELIMITER)+1);
+        return isFieldPathFinal(path) ? path : path.substring(path.lastIndexOf(DELIMITER)+1);
     }
 
     public static String[] splitPath(String path){
-        return path.split(DELIMITER);
+        return path.split(EXP_DELIMITER);
     }
 }
